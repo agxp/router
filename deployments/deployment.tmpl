@@ -1,0 +1,31 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: router
+  template:
+    metadata:
+      labels:
+        app: router
+    spec:
+        containers:
+        - name: router
+          image: router
+          imagePullPolicy: Never
+          command: [
+            "./router",
+            "--selector=static",
+            "--server_address=:80",
+            "--broker_address=:10001"
+          ]
+          env:
+          - name: UPDATED_AT
+            value: "{{ UPDATED_AT }}"
+          ports:
+          - containerPort: 80
+          resources: {}
+status: {}
