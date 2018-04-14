@@ -29,8 +29,8 @@ run:
 deploy:
 	docker push agxp/router
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
-	kubectl replace -f ./deployments/deployment.yaml
+	kubectl apply -f ./deployments/deployment.yaml
 
 deploy-local:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
-	kubectl replace -f ./deployments/deployment.yaml
+	kubectl apply -f ./deployments/deployment.yaml
