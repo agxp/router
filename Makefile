@@ -34,3 +34,4 @@ deploy:
 deploy-local:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
 	kubectl apply -f ./deployments/deployment.yaml
+	kubectl apply -f ./deployments/service.yaml

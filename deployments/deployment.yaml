@@ -16,16 +16,11 @@ spec:
         - name: router
           image: router
           imagePullPolicy: Never
-          command: [
-            "./router",
-            "--selector=static",
-            "--server_address=:80",
-            "--broker_address=:10001"
-          ]
           env:
           - name: UPDATED_AT
-            value: "Tue Apr 10 23:54:29 PDT 2018"
+            value: "Mon May 14 19:08:20 PDT 2018"
+          - name:  MICRO_REGISTRY
+            value:  kubernetes
           ports:
-          - containerPort: 80
-          resources: {}
-status: {}
+          - containerPort: 8080
+            name: router-port

@@ -2,19 +2,27 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/micro/go-web"
-	k8s "github.com/micro/kubernetes/go/web"
 	log "github.com/sirupsen/logrus"
 	"github.com/agxp/cloudflix/video-upload-svc/proto"
 	"context"
 	"github.com/micro/go-micro/client"
+	_ "github.com/micro/go-plugins/registry/kubernetes"
+	"github.com/micro/go-micro/cmd"
 )
+
 
 type Router struct{}
 
 var (
 	vu video_upload.UploadClient
 )
+
+func init() {
+	cmd.Init()
+
+	vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
+
+}
 
 func (s *Router) PresignedURL(c *gin.Context) {
 	log.Info("Recieved request for test")
@@ -28,18 +36,22 @@ func (s *Router) PresignedURL(c *gin.Context) {
 	})
 
 	if err != nil {
+		log.Fatal(err)
 		c.JSON(500, err)
 	}
 
-	c.JSON(200, res.PresignedUrl)
+	log.Print(res.PresignedUrl)
+
+	c.JSON(200, res)
 }
 
 func main() {
+
 	// Create a new service. Optionally include some options here.
-	srv := k8s.NewService(
+	//service := k8s.NewService(
 		// This name must match the package name given in your protobuf definition
-		web.Name("cloudflix.api.router"),
-	)
+		//web.Name("router"),
+	//)
 
 	// 	index, err := ioutil.ReadFile("./static/index.html")
 	// 	if err != nil {
@@ -55,7 +67,7 @@ func main() {
 	// 		log.Info("reached /presignedURL")
 	// 		if r.Method == "POST" {
 	// 			log.Info("method == POST")
-	// 			if err := r.ParseForm(); err != nil {
+	// 			if err := r.ParseForm(); err !bin/magento setup:static-content:deploy= nil {
 	// 				log.Fatal("ERROR IN PARSEFORM: %s", err)
 	// 			}
 	// 			log.Info("trying to get filename")
@@ -89,12 +101,12 @@ func main() {
 
 	// 	})
 
-	if err := srv.Init(); err != nil {
-		log.Fatal(err)
-	}
+	//if err := service.Init(); err != nil {
+	//	log.Fatal(err)
+	//}
 
 	// setup video upload service client
-	vu = video_upload.NewUploadClient("cloudflix.api.video_upload", client.DefaultClient)
+	//vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
 
 
 
@@ -106,11 +118,12 @@ func main() {
 		c.String(404, "not found")
 	})
 
-	srv.Handle("/", router)
+	//service.Handle("/", router)
+	router.Run()
 	log.Info("Started router with minikube holy shit!!!")
 
 	// Run the server
-	if err := srv.Run(); err != nil {
-		log.Fatal(err)
-	}
+	//if err := service.Run(); err != nil {
+	//	log.Fatal(err)
+	//}
 }
