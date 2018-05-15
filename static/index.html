@@ -28,7 +28,7 @@
         })
     }
     function retrieveNewURL(file, cb) {
-        $.get(`/presignedUrl?filename=${file.name}`, (url) => {
+        $.post(`/presignedUrl`, { filename: ${file.name} }, (url) => {
             cb(url)
         })
     }
