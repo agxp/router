@@ -9,7 +9,7 @@
 <form>
     Choose file...
     <input type="file" id="selector" multiple>
-    <button onclick="upload()">Upload</button>
+    <button type="button" onclick="upload()">Upload</button>
 </form>
 </body>
 </html>
@@ -21,18 +21,19 @@
             // Retrieve a URL from our server.
             retrieveNewURL(file, url => {
                 // Upload the file to the server.
-                uploadFile(file, function (url) {
-                    console.log(url)
-                })
+                uploadFile(file, url)
             })
         })
     }
     function retrieveNewURL(file, cb) {
-        $.post(`/presignedUrl`, { filename: ${file.name} }, (url) => {
+		var filename = file.name;
+        $.post(`/presignedURL`, { filename: filename }, (url) => {
             cb(url)
         })
     }
     function uploadFile(file, url) {
+		console.log(url)
+		console.log(file)
         var xhr = new XMLHttpRequest ()
         xhr.open('PUT', url, true)
         xhr.send(file)

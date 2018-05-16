@@ -18,9 +18,11 @@ spec:
           imagePullPolicy: Never
           env:
           - name: UPDATED_AT
-            value: "Mon May 14 19:08:20 PDT 2018"
+            value: "Tue May 15 17:47:49 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
+          - name: MINIO_EXTERNAL_URL
+            value: "http://192.168.99.100:31724"
           ports:
           - containerPort: 8080
             name: router-port

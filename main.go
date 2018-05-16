@@ -1,15 +1,19 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"github.com/agxp/cloudflix/video-upload-svc/proto"
 	"context"
+	"github.com/agxp/cloudflix/video-upload-svc/proto"
+	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/client"
-	_ "github.com/micro/go-plugins/registry/kubernetes"
 	"github.com/micro/go-micro/cmd"
+	_ "github.com/micro/go-plugins/registry/kubernetes"
+	log "github.com/sirupsen/logrus"
+	"os"
+	"strings"
 )
 
+var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
+var MINIO_INTERNAL_URL = "http://minio:9000"
 
 type Router struct{}
 
@@ -40,17 +44,18 @@ func (s *Router) PresignedURL(c *gin.Context) {
 		c.JSON(500, err)
 	}
 
+	res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
 	log.Print(res.PresignedUrl)
 
-	c.JSON(200, res)
+	c.JSON(200, res.PresignedUrl)
 }
 
 func main() {
 
 	// Create a new service. Optionally include some options here.
 	//service := k8s.NewService(
-		// This name must match the package name given in your protobuf definition
-		//web.Name("router"),
+	// This name must match the package name given in your protobuf definition
+	//web.Name("router"),
 	//)
 
 	// 	index, err := ioutil.ReadFile("./static/index.html")
@@ -107,8 +112,6 @@ func main() {
 
 	// setup video upload service client
 	//vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
-
-
 
 	r := new(Router)
 	router := gin.Default()
