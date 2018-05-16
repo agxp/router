@@ -11,36 +11,43 @@
     <input type="file" id="selector" multiple>
     <button type="button" onclick="upload()">Upload</button>
 </form>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </body>
 </html>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script>
     function upload() {
         [$('#selector')[0].files].forEach(fileObj => {
             var file = fileObj[0]
             // Retrieve a URL from our server.
-            retrieveNewURL(file, url => {
-                // Upload the file to the server.
-                uploadFile(file, url)
-            })
+            retrieveNewURL(file)
         })
     }
-    function retrieveNewURL(file, cb) {
+    function retrieveNewURL(file) {
 		var filename = file.name;
-        $.post(`/presignedURL`, { filename: filename }, (url) => {
-            cb(url)
+        axios.post(`/presignedURL`, {
+            filename: filename
+        }).then( function(url) {
+            console.log(url)
+            console.log(file)
+
+            var config = {
+                onUploadProgress: function(progressEvent) {
+                    var percentCompleted = Math.round( (progressEvent.loaded * 100) / progressEvent.total );
+                }
+            };
+
+            axios.put(url.data, file, config)
+                    .then(function (res) {
+                        console.log(res.data);
+                    })
+                    .catch(function (err) {
+                        console.log(err.message);
+                    });
+
         })
     }
     function uploadFile(file, url) {
-		console.log(url)
-		console.log(file)
-        var xhr = new XMLHttpRequest ()
-        xhr.open('PUT', url, true)
-        xhr.send(file)
-        xhr.onload = () => {
-            if (xhr.status == 200) {
-                $('#status').text(`Uploaded ${file.name}.`)
-            }
-        }
+
     }
 </script>

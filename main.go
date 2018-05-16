@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/agxp/cloudflix/video-upload-svc/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/client"
@@ -10,6 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
+	"context"
+	"net/http"
 )
 
 var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
@@ -27,27 +28,36 @@ func init() {
 	vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
 
 }
+type FilenamePOST struct {
+	Filename string `form:"filename" json:"filename" binding:"required"`
+}
 
 func (s *Router) PresignedURL(c *gin.Context) {
 	log.Info("Recieved request for test")
 
-	filename := c.PostForm("filename")
+	var form FilenamePOST
 
-	log.Info("filename is: ", filename)
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("filename is: ", form.Filename)
 
-	res, err := vu.S3Request(context.Background(), &video_upload.Request{
-		Filename: filename,
-	})
+		res, err := vu.S3Request(context.Background(), &video_upload.Request{
+			Filename: form.Filename,
+		})
 
-	if err != nil {
-		log.Fatal(err)
-		c.JSON(500, err)
+		if err != nil {
+			log.Fatal(err)
+			c.JSON(500, err)
+		}
+
+		res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
+		log.Print(res.PresignedUrl)
+
+		c.JSON(200, res.PresignedUrl)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
-	log.Print(res.PresignedUrl)
 
-	c.JSON(200, res.PresignedUrl)
 }
 
 func main() {
