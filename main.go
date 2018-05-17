@@ -32,8 +32,18 @@ type FilenamePOST struct {
 	Filename string `form:"filename" json:"filename" binding:"required"`
 }
 
+type UploadVideoPOST struct {
+	Filename string `form:"filename" json:"filename" binding:"required"`
+	Title string `form:"title" json:"title" binding:"required"`
+	Description string `form:"description" json:"description" binding:"required"`
+}
+
+type UploadFinishPOST struct {
+	Id string `form:"id" json:"id" binding:"required"`
+}
+
 func (s *Router) PresignedURL(c *gin.Context) {
-	log.Info("Recieved request for test")
+	log.Info("Recieved request for PresignedURL")
 
 	var form FilenamePOST
 
@@ -52,91 +62,77 @@ func (s *Router) PresignedURL(c *gin.Context) {
 		res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
 		log.Print(res.PresignedUrl)
 
-		c.JSON(200, res.PresignedUrl)
+		c.JSON(200, res)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
+}
 
+func (s *Router) UploadFile(c *gin.Context) {
+	log.Info("Recieved request for UploadFile")
+
+	var form UploadVideoPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("filename is: ", form.Filename)
+
+		res, err := vu.UploadFile(context.Background(), &video_upload.UploadRequest{
+			Filename: form.Filename,
+			Title: form.Title,
+			Description: form.Description,
+		})
+
+		if err != nil {
+			log.Fatal(err)
+			c.JSON(500, err)
+		}
+
+		res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
+		log.Print(res.PresignedUrl)
+		log.Print(res.Id)
+
+		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+}
+
+func (s *Router) UploadFinish(c *gin.Context) {
+	log.Info("Received request for UploadFinish")
+
+	var form UploadFinishPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("id is: ", form.Id)
+
+		res, err := vu.UploadFinish(context.Background(), &video_upload.UploadFinishRequest{
+			Id: form.Id,
+		})
+
+		if err != nil {
+			log.Fatal(err)
+			c.JSON(500, err)
+		}
+
+		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 
 }
 
 func main() {
 
-	// Create a new service. Optionally include some options here.
-	//service := k8s.NewService(
-	// This name must match the package name given in your protobuf definition
-	//web.Name("router"),
-	//)
-
-	// 	index, err := ioutil.ReadFile("./static/index.html")
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	Init will parse the command line flags.
-	// 	srv.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-	// 		log.Info("Reached blahblahblahfuck")
-	// 		http.ServeContent(w, r, "index.html", time.Now(), bytes.NewReader(index))
-	// 	})
-
-	// 	srv.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-	// 		log.Info("reached /presignedURL")
-	// 		if r.Method == "POST" {
-	// 			log.Info("method == POST")
-	// 			if err := r.ParseForm(); err !bin/magento setup:static-content:deploy= nil {
-	// 				log.Fatal("ERROR IN PARSEFORM: %s", err)
-	// 			}
-	// 			log.Info("trying to get filename")
-	// 			filename := r.Form.Get("filename")
-	// 			log.Info("filename", filename)
-
-	// 			// 			vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
-
-	// 			// 			rsp, err := vu.S3Request(context.Background(), &video_upload.Request{
-	// 			// 				Filename: filename,
-	// 			// 			})
-
-	// 			if err != nil {
-	// 				http.Error(w, err.Error(), 500)
-	// 				return
-	// 			}
-
-	// 			// 				req := client.NewRequest("video-upload", "Upload.S3Request", &video_upload.Request{
-	// 			// 					Filename: r.PostFormValue("filename"),
-	// 			// 				})
-
-	// 			// 				rsp := &video_upload.Response{}
-
-	// 			// 				if err := client.Call(context.Background(), req, rsp); err != nil {
-	// 			// 					log.Fatal(err, rsp)
-	// 			// 				}
-	// 			w.Write([]byte("test"))
-	// 			return
-	// 		}
-	// 		fmt.Fprint(w, `error`)
-
-	// 	})
-
-	//if err := service.Init(); err != nil {
-	//	log.Fatal(err)
-	//}
-
-	// setup video upload service client
-	//vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
-
 	r := new(Router)
 	router := gin.Default()
 	router.Static("/upload", "./static/")
 	router.POST("/presignedURL", r.PresignedURL)
+	router.POST("/uploadFile", r.UploadFile)
+	router.POST("/uploadFinish", r.UploadFinish)
 	router.NoRoute(func(c *gin.Context) {
 		c.String(404, "not found")
 	})
 
-	//service.Handle("/", router)
 	router.Run()
-	log.Info("Started router with minikube holy shit!!!")
-
-	// Run the server
-	//if err := service.Run(); err != nil {
-	//	log.Fatal(err)
-	//}
+	log.Info("Started router")
 }

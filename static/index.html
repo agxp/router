@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <title>CloudFlix</title>
 </head>
-<body>
 <h1>Welcome to cloudflix</h1>
-<form>
     Choose file...
-    <input type="file" id="selector" multiple>
+    <input type="file" id="selector">
+    <input type="text" id="title">
+    <label for="title">Title</label>
+    <input type="text" id="description">
+    <label for="description">Description</label>
+
     <button type="button" onclick="upload()">Upload</button>
-</form>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-</body>
 </html>
 <script>
     function upload() {
@@ -25,10 +26,23 @@
     }
     function retrieveNewURL(file) {
 		var filename = file.name;
-        axios.post(`/presignedURL`, {
-            filename: filename
-        }).then( function(url) {
-            console.log(url)
+		var title = document.getElementById('title').value;
+        var description = document.getElementById('description').value;
+
+        if (title.length === 0) {
+		    console.log("must have title");
+            return;
+        }
+        if (description.length === 0) {
+            console.log("must have description");
+            return;
+        }
+        axios.post(`/uploadFile`, {
+            filename,
+            title,
+            description
+        }).then( function(res) {
+            console.log(res)
             console.log(file)
 
             var config = {
@@ -37,9 +51,16 @@
                 }
             };
 
-            axios.put(url.data, file, config)
+            var id = res.data['id'];
+
+            axios.put(res.data['presigned_url'], file, config)
                     .then(function (res) {
-                        console.log(res.data);
+                        console.log("finished upload of" + file.name);
+                        axios.post(`/uploadFinish`, {
+                            id
+                        }).then(function(res) {
+                            console.log("server accepted UploadFinish")
+                        })
                     })
                     .catch(function (err) {
                         console.log(err.message);
