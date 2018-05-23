@@ -24,7 +24,7 @@ spec:
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL
-            value: "http://192.168.1.74:31130"
+            value: "http://192.168.1.74:30366"
           - name: JAEGER_SERVICE_NAME
             value: router-svc
           - name: JAEGER_AGENT_HOST
@@ -41,4 +41,4 @@ spec:
           - name: router-port
             containerPort: 8080
           - name: prometheus
-            containerPort: 9099
+            containerPort: 9090
