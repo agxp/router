@@ -22,7 +22,7 @@ spec:
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL
-            value: "http://192.168.99.100:31724"
+            value: ""
           ports:
           - containerPort: 8080
             name: router-port
