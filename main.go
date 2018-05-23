@@ -58,6 +58,9 @@ type GetVideoPOST struct {
 }
 
 func (s *Router) PresignedURL(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "PresignedURL_Route")
+	defer sp.Finish()
+
 	log.Info("Recieved request for PresignedURL")
 
 	var form FilenamePOST
@@ -70,7 +73,7 @@ func (s *Router) PresignedURL(c *gin.Context) {
 		})
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			c.JSON(500, err)
 		}
 
@@ -101,7 +104,7 @@ func (s *Router) UploadFile(c *gin.Context) {
 		})
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			c.JSON(500, err)
 		}
 
@@ -116,6 +119,9 @@ func (s *Router) UploadFile(c *gin.Context) {
 }
 
 func (s *Router) UploadFinish(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Route")
+	defer sp.Finish()
+
 	log.Info("Received request for UploadFinish")
 
 	var form UploadFinishPOST
@@ -128,7 +134,7 @@ func (s *Router) UploadFinish(c *gin.Context) {
 		})
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			c.JSON(500, err)
 		}
 
@@ -140,6 +146,9 @@ func (s *Router) UploadFinish(c *gin.Context) {
 }
 
 func (s *Router) GetVideoInfo(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideoInfo_Route")
+	defer sp.Finish()
+
 	log.Info("Received request for GetVideoInfo")
 
 	var form GetVideoInfoPOST
@@ -152,7 +161,7 @@ func (s *Router) GetVideoInfo(c *gin.Context) {
 		})
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			c.JSON(500, err)
 		}
 
@@ -164,12 +173,16 @@ func (s *Router) GetVideoInfo(c *gin.Context) {
 }
 
 func (s *Router) GetVideo(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideo_Route")
+	defer sp.Finish()
+
 	log.Info("Received request for GetVideo")
 
 	var form GetVideoPOST
 
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("id is: ", form.Id)
+		log.Info("resolution is: ", form.Resolution)
 
 		res, err := vh.GetVideo(context.Background(), &video_host.GetVideoRequest{
 			Id:         form.Id,
@@ -177,7 +190,7 @@ func (s *Router) GetVideo(c *gin.Context) {
 		})
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			c.JSON(500, err)
 		}
 

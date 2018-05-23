@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: router
+      annotations:
+        prometheus.io/scrape: "true"
     spec:
         containers:
         - name: router
@@ -22,7 +24,21 @@ spec:
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL
-            value: ""
+            value: "http://192.168.1.74:31130"
+          - name: JAEGER_SERVICE_NAME
+            value: router-svc
+          - name: JAEGER_AGENT_HOST
+            value: jaeger-agent
+          - name: JAEGER_SAMPLER_TYPE
+            value: const
+          - name: JAEGER_SAMPLER_PARAM
+            value: "1"
+          - name: JAEGER_REPORTER_LOG_SPANS
+            value: "true"
+          - name: OPENTRACING_METRICS_EXPORTER_HTTP_PATH
+            value: "/metrics"
           ports:
-          - containerPort: 8080
-            name: router-port
+          - name: router-port
+            containerPort: 8080
+          - name: prometheus
+            containerPort: 9099

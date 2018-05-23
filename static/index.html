@@ -13,6 +13,16 @@
     <label for="description">Description</label>
 
     <button type="button" onclick="upload()">Upload</button>
+
+    <div>
+        <h3>ID of your uploaded video:</h3>
+        <div id="new-video-id"></div>
+        <button type="button" onclick="watch()">Click to watch your new video</button>
+    </div>
+
+<div>
+    <video id="new-video" controls autoplay></video>
+</div>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </html>
@@ -52,6 +62,8 @@
             };
 
             var id = res.data['id'];
+            var id_block = document.getElementById("new-video-id");
+            id_block.textContent = id
 
             axios.put(res.data['presigned_url'], file, config)
                     .then(function (res) {
@@ -68,7 +80,24 @@
 
         })
     }
-    function uploadFile(file, url) {
+    function watch() {
+        var id = document.getElementById("new-video-id").textContent
+        axios.post(`/videoInfo`, {
+            id
+        }).then(function (res) {
+            console.log(res)
+        })
 
+        axios.post(`/v`, {
+            id,
+            resolution: "720p",
+        }).then(function(res) {
+            console.log(res)
+            var video = document.getElementById("new-video")
+            video.setAttribute("src", res.data["presigned_url"])
+            video.load()
+            video.play()
+        })
     }
+
 </script>
