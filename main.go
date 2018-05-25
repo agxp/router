@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"github.com/agxp/cloudflix/trending-svc/proto"
 )
 
 var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
@@ -24,6 +25,7 @@ type Router struct{}
 var (
 	vu     video_upload.UploadClient
 	vh     video_host.HostClient
+	tr     trending.TrendingClient
 	tracer *opentracing.Tracer
 )
 
@@ -32,6 +34,7 @@ func init() {
 
 	vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
 	vh = video_host.NewHostClient("video_host", client.DefaultClient)
+	tr = trending.NewTrendingClient("trending", client.DefaultClient)
 }
 
 type FilenamePOST struct {
@@ -57,33 +60,21 @@ type GetVideoPOST struct {
 	Resolution string `form:"resolution" json:"resolution" binding:"required"`
 }
 
-func (s *Router) PresignedURL(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "PresignedURL_Route")
+func (s *Router) GetTrending(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetTrending_Route")
 	defer sp.Finish()
 
-	log.Info("Recieved request for PresignedURL")
+	log.Info("Recieved request for GetTrending")
 
-	var form FilenamePOST
-
-	if err := c.ShouldBind(&form); err == nil {
-		log.Info("filename is: ", form.Filename)
-
-		res, err := vu.S3Request(context.Background(), &video_upload.Request{
-			Filename: form.Filename,
-		})
-
+		res, err := tr.GetTrending(context.Background(), &trending.Request{})
 		if err != nil {
 			log.Error(err)
 			c.JSON(500, err)
 		}
 
-		res.PresignedUrl = strings.Replace(res.PresignedUrl, MINIO_INTERNAL_URL, MINIO_EXTERNAL_URL, -1)
-		log.Print(res.PresignedUrl)
+		log.Print(res.Data)
 
 		c.JSON(200, res)
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
 }
 
 func (s *Router) UploadFile(c *gin.Context) {
@@ -156,7 +147,7 @@ func (s *Router) GetVideoInfo(c *gin.Context) {
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("id is: ", form.Id)
 
-		res, err := vh.GetVideoInfo(context.Background(), &video_host.Request{
+		res, err := vh.GetVideoInfo(context.Background(), &video_host.GetVideoInfoRequest{
 			Id: form.Id,
 		})
 
@@ -201,6 +192,21 @@ func (s *Router) GetVideo(c *gin.Context) {
 
 }
 
+func (s *Router) Prune(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "Prune_Route")
+	defer sp.Finish()
+
+	log.Info("Received request for Prune")
+
+		res, err := tr.Prune(context.Background(), &trending.PruneRequest{})
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(500, err)
+		}
+		c.JSON(200, res)
+}
+
 func main() {
 
 	cfg, err := jaegercfg.FromEnv()
@@ -224,11 +230,12 @@ func main() {
 	r := new(Router)
 	router := gin.Default()
 	router.Static("/upload", "./static/")
-	router.POST("/presignedURL", r.PresignedURL)
+	router.POST("/trending", r.GetTrending)
 	router.POST("/uploadFile", r.UploadFile)
 	router.POST("/uploadFinish", r.UploadFinish)
 	router.POST("/v", r.GetVideo)
 	router.POST("/videoInfo", r.GetVideoInfo)
+	router.POST("/prune", r.Prune)
 	router.NoRoute(func(c *gin.Context) {
 		if c.Request.URL.EscapedPath() == "/" {
 			c.String(200, "CloudFlix, under construction")

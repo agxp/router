@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: UPDATED_AT
-            value: "Wed May 23 13:20:19 PDT 2018"
+            value: "Thu May 24 22:34:37 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL
