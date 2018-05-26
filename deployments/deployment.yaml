@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: router
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: router
@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: UPDATED_AT
-            value: "Fri May 25 20:45:49 PDT 2018"
+            value: "Sat May 26 13:30:17 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL

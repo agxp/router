@@ -69,12 +69,12 @@ type SearchPOST struct {
 }
 
 func (s *Router) GetTrending(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetTrending_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "GetTrending_Route")
 	defer sp.Finish()
 
 	log.Info("Recieved request for GetTrending")
 
-	res, err := tr.GetTrending(context.Background(), &trending.Request{})
+	res, err := tr.GetTrending(context.TODO(), &trending.Request{})
 	if err != nil {
 		log.Error(err)
 		c.JSON(500, err)
@@ -86,7 +86,7 @@ func (s *Router) GetTrending(c *gin.Context) {
 }
 
 func (s *Router) UploadFile(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFile_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "UploadFile_Route")
 	defer sp.Finish()
 
 	log.Info("Recieved request for UploadFile")
@@ -96,7 +96,7 @@ func (s *Router) UploadFile(c *gin.Context) {
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("filename is: ", form.Filename)
 
-		res, err := vu.UploadFile(context.Background(), &video_upload.UploadRequest{
+		res, err := vu.UploadFile(context.TODO(), &video_upload.UploadRequest{
 			Filename:    form.Filename,
 			Title:       form.Title,
 			Description: form.Description,
@@ -118,7 +118,7 @@ func (s *Router) UploadFile(c *gin.Context) {
 }
 
 func (s *Router) UploadFinish(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "UploadFinish_Route")
 	defer sp.Finish()
 
 	log.Info("Received request for UploadFinish")
@@ -128,7 +128,7 @@ func (s *Router) UploadFinish(c *gin.Context) {
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("id is: ", form.Id)
 
-		res, err := vu.UploadFinish(context.Background(), &video_upload.UploadFinishRequest{
+		res, err := vu.UploadFinish(context.TODO(), &video_upload.UploadFinishRequest{
 			Id: form.Id,
 		})
 
@@ -145,7 +145,7 @@ func (s *Router) UploadFinish(c *gin.Context) {
 }
 
 func (s *Router) GetVideoInfo(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideoInfo_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "GetVideoInfo_Route")
 	defer sp.Finish()
 
 	log.Info("Received request for GetVideoInfo")
@@ -155,7 +155,7 @@ func (s *Router) GetVideoInfo(c *gin.Context) {
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("id is: ", form.Id)
 
-		res, err := vh.GetVideoInfo(context.Background(), &video_host.GetVideoInfoRequest{
+		res, err := vh.GetVideoInfo(context.TODO(), &video_host.GetVideoInfoRequest{
 			Id: form.Id,
 		})
 
@@ -172,7 +172,7 @@ func (s *Router) GetVideoInfo(c *gin.Context) {
 }
 
 func (s *Router) GetVideo(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideo_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "GetVideo_Route")
 	defer sp.Finish()
 
 	log.Info("Received request for GetVideo")
@@ -183,7 +183,7 @@ func (s *Router) GetVideo(c *gin.Context) {
 		log.Info("id is: ", form.Id)
 		log.Info("resolution is: ", form.Resolution)
 
-		res, err := vh.GetVideo(context.Background(), &video_host.GetVideoRequest{
+		res, err := vh.GetVideo(context.TODO(), &video_host.GetVideoRequest{
 			Id:         form.Id,
 			Resolution: form.Resolution,
 		})
@@ -201,12 +201,12 @@ func (s *Router) GetVideo(c *gin.Context) {
 }
 
 func (s *Router) Prune(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "Prune_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "Prune_Route")
 	defer sp.Finish()
 
 	log.Info("Received request for Prune")
 
-	res, err := tr.Prune(context.Background(), &trending.PruneRequest{})
+	res, err := tr.Prune(context.TODO(), &trending.PruneRequest{})
 
 	if err != nil {
 		log.Error(err)
@@ -216,7 +216,7 @@ func (s *Router) Prune(c *gin.Context) {
 }
 
 func (s *Router) Search(c *gin.Context) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "Search_Route")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "Search_Route")
 	defer sp.Finish()
 
 	log.Info("Received request for Search")
@@ -227,7 +227,7 @@ func (s *Router) Search(c *gin.Context) {
 		log.Info("Query is: ", form.Query)
 		log.Info("Page is: ", form.Page)
 
-		res, err := vs.Search(context.Background(), &video_search.Request{
+		res, err := vs.Search(context.TODO(), &video_search.Request{
 			Query: form.Query,
 			Page:  form.Page,
 		})
