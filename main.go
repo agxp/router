@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"github.com/agxp/cloudflix/trending-svc/proto"
+	"github.com/agxp/cloudflix/video-search-svc/proto"
 )
 
 var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
@@ -26,6 +27,7 @@ var (
 	vu     video_upload.UploadClient
 	vh     video_host.HostClient
 	tr     trending.TrendingClient
+	vs     video_search.SearchClient
 	tracer *opentracing.Tracer
 )
 
@@ -35,6 +37,7 @@ func init() {
 	vu = video_upload.NewUploadClient("video_upload", client.DefaultClient)
 	vh = video_host.NewHostClient("video_host", client.DefaultClient)
 	tr = trending.NewTrendingClient("trending", client.DefaultClient)
+	vs = video_search.NewSearchClient("video_search", client.DefaultClient)
 }
 
 type FilenamePOST struct {
@@ -60,21 +63,26 @@ type GetVideoPOST struct {
 	Resolution string `form:"resolution" json:"resolution" binding:"required"`
 }
 
+type SearchPOST struct {
+	Query string `form:"q" json:"q" binding:"required"`
+	Page  uint64 `form:"page" json:"page"`
+}
+
 func (s *Router) GetTrending(c *gin.Context) {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetTrending_Route")
 	defer sp.Finish()
 
 	log.Info("Recieved request for GetTrending")
 
-		res, err := tr.GetTrending(context.Background(), &trending.Request{})
-		if err != nil {
-			log.Error(err)
-			c.JSON(500, err)
-		}
+	res, err := tr.GetTrending(context.Background(), &trending.Request{})
+	if err != nil {
+		log.Error(err)
+		c.JSON(500, err)
+	}
 
-		log.Print(res.Data)
+	log.Print(res.Data)
 
-		c.JSON(200, res)
+	c.JSON(200, res)
 }
 
 func (s *Router) UploadFile(c *gin.Context) {
@@ -198,13 +206,42 @@ func (s *Router) Prune(c *gin.Context) {
 
 	log.Info("Received request for Prune")
 
-		res, err := tr.Prune(context.Background(), &trending.PruneRequest{})
+	res, err := tr.Prune(context.Background(), &trending.PruneRequest{})
+
+	if err != nil {
+		log.Error(err)
+		c.JSON(500, err)
+	}
+	c.JSON(200, res)
+}
+
+func (s *Router) Search(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "Search_Route")
+	defer sp.Finish()
+
+	log.Info("Received request for Search")
+
+	var form SearchPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("Query is: ", form.Query)
+		log.Info("Page is: ", form.Page)
+
+		res, err := vs.Search(context.Background(), &video_search.Request{
+			Query: form.Query,
+			Page:  form.Page,
+		})
 
 		if err != nil {
 			log.Error(err)
 			c.JSON(500, err)
 		}
+
 		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, "Missing parameters")
+	}
+
 }
 
 func main() {
@@ -236,6 +273,7 @@ func main() {
 	router.POST("/v", r.GetVideo)
 	router.POST("/videoInfo", r.GetVideoInfo)
 	router.POST("/prune", r.Prune)
+	router.POST("/search", r.Search)
 	router.NoRoute(func(c *gin.Context) {
 		if c.Request.URL.EscapedPath() == "/" {
 			c.String(200, "CloudFlix, under construction")
