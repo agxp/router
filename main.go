@@ -16,6 +16,7 @@ import (
 	"strings"
 	"github.com/agxp/cloudflix/trending-svc/proto"
 	"github.com/agxp/cloudflix/video-search-svc/proto"
+	"github.com/agxp/cloudflix/comments-svc/proto"
 )
 
 var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
@@ -28,6 +29,7 @@ var (
 	vh     video_host.HostClient
 	tr     trending.TrendingClient
 	vs     video_search.SearchClient
+	cm     comments.CommentsClient
 	tracer *opentracing.Tracer
 )
 
@@ -38,6 +40,7 @@ func init() {
 	vh = video_host.NewHostClient("video_host", client.DefaultClient)
 	tr = trending.NewTrendingClient("trending", client.DefaultClient)
 	vs = video_search.NewSearchClient("video_search", client.DefaultClient)
+	cm = comments.NewCommentsClient("comments", client.DefaultClient)
 }
 
 type FilenamePOST struct {
@@ -66,6 +69,20 @@ type GetVideoPOST struct {
 type SearchPOST struct {
 	Query string `form:"q" json:"q" binding:"required"`
 	Page  uint64 `form:"page" json:"page"`
+}
+
+type GetCommentsFromVideoIdPOST struct {
+	VideoId string `form:"video_id" json:"video_id" binding:"required"`
+}
+
+type GetCommentPOST struct {
+	Id string `form:"id" json:"id" binding:"required"`
+}
+
+type WriteCommentPOST struct {
+	VideoId string `form:"video_id" json:"video_id" binding:"required"`
+	UserId  string `form:"user_id" json:"user_id" binding:"required"`
+	Content string `form:"content" json:"content" binding:"required"`
 }
 
 func (s *Router) GetTrending(c *gin.Context) {
@@ -244,6 +261,90 @@ func (s *Router) Search(c *gin.Context) {
 
 }
 
+func (s *Router) GetCommentsFromVideoId(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "GetCommentsFromVideoId_Route")
+	defer sp.Finish()
+
+	log.Info("Received request for GetCommentsFromVideoId")
+
+	var form GetCommentsFromVideoIdPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("VideoId is: ", form.VideoId)
+
+		res, err := cm.GetAllForVideoId(context.TODO(), &comments.Request{
+			VideoId: form.VideoId,
+		})
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(500, err)
+		}
+
+		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, "Missing parameters")
+	}
+
+}
+
+func (s *Router) GetComment(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "GetComment_Route")
+	defer sp.Finish()
+
+	log.Info("Received request for GetComment")
+
+	var form GetCommentPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("Comment Id is: ", form.Id)
+
+		res, err := cm.GetSingle(context.TODO(), &comments.SingleRequest{
+			CommentId: form.Id,
+		})
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(500, err)
+		}
+
+		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, "Missing parameters")
+	}
+
+}
+
+func (s *Router) WriteComment(c *gin.Context) {
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "WriteComment_Route")
+	defer sp.Finish()
+
+	log.Info("Received request for WriteComment")
+
+	var form WriteCommentPOST
+
+	if err := c.ShouldBind(&form); err == nil {
+		log.Info("VideoId is: ", form.VideoId)
+		log.Info("UserId is: ", form.UserId)
+		log.Info("Content is: ", form.Content)
+
+		res, err := cm.Write(context.TODO(), &comments.WriteRequest{
+			VideoId: form.VideoId,
+			User:    form.UserId,
+			Content: form.Content,
+		})
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(500, err)
+		}
+
+		c.JSON(200, res)
+	} else {
+		c.JSON(http.StatusBadRequest, "Missing parameters")
+	}
+
+}
 func main() {
 
 	cfg, err := jaegercfg.FromEnv()
@@ -266,6 +367,7 @@ func main() {
 
 	r := new(Router)
 	router := gin.Default()
+
 	router.Static("/upload", "./static/")
 	router.POST("/trending", r.GetTrending)
 	router.POST("/uploadFile", r.UploadFile)
@@ -274,6 +376,10 @@ func main() {
 	router.POST("/videoInfo", r.GetVideoInfo)
 	router.POST("/prune", r.Prune)
 	router.POST("/search", r.Search)
+	router.POST("/comments", r.GetCommentsFromVideoId)
+	router.POST("/comment", r.GetComment)
+	router.POST("/writeComment", r.WriteComment)
+
 	router.NoRoute(func(c *gin.Context) {
 		if c.Request.URL.EscapedPath() == "/" {
 			c.String(200, "CloudFlix, under construction")
