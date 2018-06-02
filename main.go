@@ -17,6 +17,7 @@ import (
 	"github.com/agxp/cloudflix/trending-svc/proto"
 	"github.com/agxp/cloudflix/video-search-svc/proto"
 	"github.com/agxp/cloudflix/comments-svc/proto"
+	"github.com/gin-contrib/cors"
 )
 
 var MINIO_EXTERNAL_URL = os.Getenv("MINIO_EXTERNAL_URL")
@@ -367,6 +368,7 @@ func main() {
 
 	r := new(Router)
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	router.Static("/upload", "./static/")
 	router.POST("/trending", r.GetTrending)

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: router
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: router
@@ -24,7 +24,7 @@ spec:
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MINIO_EXTERNAL_URL
-            value: "http://192.168.1.74:30366"
+            value: "http://192.168.1.74:32218"
           - name: JAEGER_SERVICE_NAME
             value: router-svc
           - name: JAEGER_AGENT_HOST
