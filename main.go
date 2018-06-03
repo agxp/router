@@ -146,7 +146,7 @@ func (s *Router) UploadFinish(c *gin.Context) {
 	if err := c.ShouldBind(&form); err == nil {
 		log.Info("id is: ", form.Id)
 
-		res, err := vu.UploadFinish(context.TODO(), &video_upload.UploadFinishRequest{
+		res, err := vu.UploadFinish(context.Background(), &video_upload.UploadFinishRequest{
 			Id: form.Id,
 		})
 
